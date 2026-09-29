@@ -1,0 +1,110 @@
+---
+title: "EconLens: Consumer Economy Intelligence"
+subtitle: "A reproducible descriptive report using World Bank data"
+author: "Trisha Dasari"
+date: today
+format:
+  html:
+    toc: true
+    code-fold: true
+jupyter: python3
+execute:
+  echo: false
+  warning: false
+---
+
+## Research question
+How do annual inflation, household and NPISH consumption growth, and GDP growth differ across India, Singapore, Thailand, and the UAE? This is descriptive analysis, not evidence of a causal relationship.
+
+```{python}
+from econlens.storage import read_from_sqlite
+from econlens.transform import quality_report
+from econlens.config import INDICATORS
+import plotly.express as px
+from IPython.display import display
+
+df = read_from_sqlite('../data/processed/econlens.sqlite')
+display(quality_report(df))
+```
+
+## Historical trends
+```{python}
+for code, name in INDICATORS.items():
+    plot_data = df.loc[(df.indicator_code == code) & df.value.notna()]
+    chart = px.line(plot_data, x='year', y='value', color='country', markers=True,
+                    title=name, labels={'value': 'Annual %', 'year': 'Year'})
+    chart.show()
+```
+
+
+## Key Economic Findings
+
+### Household Consumption: Cross-Country Comparison
+
+The following analysis compares household consumption growth using
+the latest year for which all four economies have published data.
+
+```{python}
+from IPython.display import Markdown
+
+consumption = df.loc[
+    (df["indicator_code"] == "NE.CON.PRVT.KD.ZG")
+    & df["value"].notna()
+].copy()
+
+country_count = df["country"].nunique()
+
+coverage = consumption.groupby("year")["country"].nunique()
+
+common_years = coverage[
+    coverage == country_count
+].index
+
+if len(common_years) > 0:
+    comparison_year = int(max(common_years))
+
+    comparison = consumption.loc[
+        consumption["year"] == comparison_year
+    ].sort_values("value", ascending=False)
+
+    highest = comparison.iloc[0]
+    lowest = comparison.iloc[-1]
+
+    gap = highest["value"] - lowest["value"]
+
+    display(Markdown(
+        f"**Finding:** In {comparison_year}, "
+        f"{highest['country']} recorded the highest "
+        f"household consumption growth among the four "
+        f"economies at {highest['value']:.2f}%, "
+        f"compared with {lowest['country']} "
+        f"at {lowest['value']:.2f}%. "
+        f"The difference was {gap:.2f} percentage points."
+    ))
+
+    display(
+        comparison[["country", "value"]]
+        .rename(columns={
+            "country": "Economy",
+            "value": "Annual growth (%)"
+        })
+        .reset_index(drop=True)
+        .round(2)
+    )
+else:
+    display(Markdown(
+        "No common observation year is available."
+    ))
+```
+
+**Analytical interpretation:** These figures compare annual growth rates, not absolute household expenditure levels. Differences alone do not establish their economic causes.
+
+
+## Research limitations
+- All metrics are public country-level aggregate annual indicators; none represents Mastercard transactions or individual cardholders.
+- Availability differs across indicator, country, and year. Nulls are retained in stored data and omitted from trend traces; no imputation is used.
+- Household and NPISH consumption is a national-accounts concept, not a direct measurement of payment-card spending.
+- Association between indicators does not establish causality.
+
+## Source and method
+World Bank, World Development Indicators. Each series includes its canonical World Bank indicator page URL in the source table. Source extracts and cleaned records are saved separately for reproducibility.

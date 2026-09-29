@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.ipynb_checkpoints/
+*.pyc
+*.sqlite
+*.db
+*.html
+.quarto/
+data/raw/*.csv
+data/processed/*.csv
+reports/economic_insights_files/
