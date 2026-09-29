@@ -4,6 +4,7 @@ import plotly.express as px
 import streamlit as st
 from econlens.config import COUNTRIES, INDICATORS
 from econlens.storage import read_from_sqlite
+from econlens.pipeline import run as build_database
 from econlens.transform import quality_report
 
 st.set_page_config(page_title='EconLens', page_icon='📈', layout='wide')
@@ -11,9 +12,16 @@ st.title('EconLens | Consumer Economy Intelligence')
 st.caption('Source: World Bank World Development Indicators • Annual observations • Not Mastercard transaction data')
 try:
     df = read_from_sqlite()
-except FileNotFoundError as exc:
-    st.error(str(exc))
-    st.stop()
+
+except FileNotFoundError:
+    with st.spinner("Retrieving economic data from World Bank..."):
+        try:
+            build_database()
+            df = read_from_sqlite()
+
+        except Exception as exc:
+            st.error(f"Unable to retrieve economic data: {exc}")
+            st.stop()
 
 country_choices = list(COUNTRIES.values())
 selected_countries = st.sidebar.multiselect('Countries', country_choices, default=country_choices)

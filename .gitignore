@@ -10,3 +10,4 @@ __pycache__/
 data/raw/*.csv
 data/processed/*.csv
 reports/economic_insights_files/
+*.sqlite.backup
