@@ -10,6 +10,12 @@ from econlens.transform import quality_report
 st.set_page_config(page_title='EconLens', page_icon='📈', layout='wide')
 st.title('EconLens | Consumer Economy Intelligence')
 st.caption('Source: World Bank World Development Indicators • Annual observations • Not Mastercard transaction data')
+st.link_button(
+    "📄 Read the Economic Research Report",
+    "https://3sha08.github.io/econlens-consumer-economy-intelligence/",
+    type="primary"
+)
+
 try:
     df = read_from_sqlite()
 
